@@ -16,5 +16,5 @@ CREATE TABLE todoapp.tasks (
     completed BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    author_user_id UUID NOT NULL REFERENCES users(id)
+    author_user_id UUID NOT NULL REFERENCES todoapp.users(id)
 );

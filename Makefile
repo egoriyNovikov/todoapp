@@ -5,7 +5,7 @@ export PROJECT_ROOT=$(shell pwd)
 
 env-up:
 	docker-compose up -d todoapp-postgres
-env-dow:
+env-down:
 	docker-compose down todoapp-postgres
 env-cleanup:
 	read -p "Are you sure you want to cleanup the environment? (y/n): " confirm; \
@@ -42,5 +42,7 @@ migrate-actions:
 		-database postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@todoapp-postgres:5432/$(POSTGRES_DB)?sslmode=disable \
 		"$(action)"
 
-env-socat:
+env-socat-up:
 	docker compose up -d todoapp-env-alpine-socat
+env-socat-down:
+	docker compose down todoapp-env-alpine-socat
