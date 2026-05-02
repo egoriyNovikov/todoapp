@@ -1,7 +1,16 @@
 package main
 
-import "fmt"
+import (
+	"log"
+
+	"github.com/egoriynovikov/todoapp/internal/core/app"
+)
 
 func main() {
-	fmt.Println("Hello World!")
+	application := app.NewApp()
+
+	log.Println("Server starting on :8080")
+	if err := application.Run(); err != nil {
+		log.Fatal(err)
+	}
 }
