@@ -1,20 +1,24 @@
 package user_repository
 
-import "errors"
+import (
+	"errors"
 
-type PostgresRepo struct {
-	// тут может быть *sql.DB (подключение к базе)
+	"github.com/jackc/pgx/v5"
+)
+
+type postgresUserRepository struct {
+	db *pgx.Conn
 }
 
 type UserRepository interface {
 	FindByID(id string) (string, error)
 }
 
-func NewPostgresRepo() *PostgresRepo {
-	return &PostgresRepo{}
+func NewPostgresRepo(db *pgx.Conn) *postgresUserRepository {
+	return &postgresUserRepository{db: db}
 }
 
-func (r *PostgresRepo) FindByID(id string) (string, error) {
+func (r *postgresUserRepository) FindByID(id string) (string, error) {
 	if id == "0" {
 		return "", errors.New("not found")
 	}

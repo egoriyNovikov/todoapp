@@ -3,11 +3,11 @@ package main
 import (
 	"log"
 
-	"github.com/egoriynovikov/todoapp/internal/core/app"
+	core_app "github.com/egoriynovikov/todoapp/internal/core"
 )
 
 func main() {
-	application := app.NewApp()
+	application := core_app.NewApp()
 
 	log.Println("Server starting on :8080")
 	if err := application.Run(); err != nil {
