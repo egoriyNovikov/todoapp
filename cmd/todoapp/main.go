@@ -8,6 +8,7 @@ import (
 
 func main() {
 	application := core_app.NewApp()
+	defer application.Close()
 
 	log.Println("Server starting on :8080")
 	if err := application.Run(); err != nil {

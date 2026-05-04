@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/egoriynovikov/todoapp/internal/featchers/users"
 	user_service "github.com/egoriynovikov/todoapp/internal/featchers/users/service"
 )
 
@@ -25,4 +26,18 @@ func (h *UserHandle) GetUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Fprintf(w, "User: %s", date)
+}
+
+func (h *UserHandle) CreateUser(w http.ResponseWriter, r *http.Request) {
+	name := r.FormValue("name")
+	email := r.FormValue("email")
+	password := r.FormValue("password")
+
+	id, err := h.service.CreateUser(&users.User{Name: name, Email: email, Password: password})
+	if err != nil {
+		fmt.Fprintf(w, "failed to create user: %w", err)
+		return
+	}
+
+	fmt.Fprintf(w, "User created: %s\n", id)
 }

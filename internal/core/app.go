@@ -31,7 +31,6 @@ func NewApp() *App {
 		db:     db,
 	}
 	a.mapRoutes()
-	defer db.Close(context.Background())
 	return a
 }
 
@@ -41,8 +40,15 @@ func (a *App) mapRoutes() {
 	userHdl := http_user_transport.NewUserHandler(userSvc)
 
 	a.router.HandleFunc("GET /user/{id}", userHdl.GetUser)
+	a.router.HandleFunc("POST /user", userHdl.CreateUser)
 }
 
 func (a *App) Run() error {
 	return http.ListenAndServe(":8080", a.router)
+}
+
+func (a *App) Close() {
+	if a.db != nil {
+		_ = a.db.Close(context.Background())
+	}
 }
