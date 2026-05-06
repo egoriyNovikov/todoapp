@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	core_config "github.com/egoriynovikov/todoapp/internal/core/config"
+	core_middleware_header "github.com/egoriynovikov/todoapp/internal/core/middleware/header"
 	user_repository "github.com/egoriynovikov/todoapp/internal/featchers/users/repository"
 	user_service "github.com/egoriynovikov/todoapp/internal/featchers/users/service"
 	http_user_transport "github.com/egoriynovikov/todoapp/internal/featchers/users/transport/http"
@@ -41,10 +42,14 @@ func (a *App) mapRoutes() {
 
 	a.router.HandleFunc("GET /user/{id}", userHdl.GetUser)
 	a.router.HandleFunc("POST /user", userHdl.CreateUser)
+	a.router.HandleFunc("PUT /user/{id}", userHdl.UpdateUser)
+	a.router.HandleFunc("DELETE /user/{id}", userHdl.SoftDeleteUser)
+	a.router.HandleFunc("GET /users", userHdl.GetAllUsers)
 }
 
 func (a *App) Run() error {
-	return http.ListenAndServe(":8080", a.router)
+	handler := core_middleware_header.JsonContentTypeMiddleware(a.router)
+	return http.ListenAndServe(":8080", handler)
 }
 
 func (a *App) Close() {
