@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/egoriynovikov/todoapp/internal/featchers/users"
 	"github.com/jackc/pgx/v5"
@@ -17,6 +18,8 @@ type UserRepository interface {
 	FindByID(id string) (users.User, error)
 	CreateUser(user *users.User) (string, error)
 	FindAll() ([]users.User, error)
+	UpdateUser(id string, user *users.User) (string, error)
+	SoftDeleteUser(id string) (string, error)
 }
 
 func NewPostgresRepo(db *pgx.Conn) *postgresUserRepository {
@@ -24,9 +27,9 @@ func NewPostgresRepo(db *pgx.Conn) *postgresUserRepository {
 }
 
 func (r *postgresUserRepository) FindByID(id string) (users.User, error) {
-	row := r.db.QueryRow(context.Background(), "SELECT name FROM todoapp.users WHERE id = $1", id)
+	row := r.db.QueryRow(context.Background(), "SELECT * FROM todoapp.users WHERE id = $1", id)
 	var user users.User
-	err := row.Scan(&user)
+	err := row.Scan(&user.ID, &user.Name, &user.Email, &user.Password, &user.CreatedAt, &user.UpdatedAt)
 	if err != nil {
 		return users.User{}, err
 	}
@@ -46,7 +49,7 @@ func (r *postgresUserRepository) CreateUser(user *users.User) (string, error) {
 }
 
 func (r *postgresUserRepository) FindAll() ([]users.User, error) {
-	rows, err := r.db.Query(context.Background(), "SELECT * FROM todoapp.users")
+	rows, err := r.db.Query(context.Background(), "SELECT * FROM todoapp.users WHERE deleted_at IS NULL")
 	if err != nil {
 		return []users.User{}, err
 	}
@@ -55,11 +58,33 @@ func (r *postgresUserRepository) FindAll() ([]users.User, error) {
 	var usersList []users.User
 	for rows.Next() {
 		var user users.User
-		err = rows.Scan(&user.ID, &user.Name, &user.Email, &user.Password, &user.CreatedAt, &user.UpdatedAt)
+		err = rows.Scan(&user.ID, &user.Name, &user.Email, &user.Password, &user.CreatedAt, &user.UpdatedAt, &user.DeletedAt)
 		if err != nil {
 			return nil, err
 		}
 		usersList = append(usersList, user)
 	}
 	return usersList, nil
+}
+
+func (r *postgresUserRepository) UpdateUser(id string, user *users.User) (string, error) {
+	fmt.Printf("Updating user: %+v\n", user)
+	fmt.Printf("ID: %s\n", id)
+	rows, err := r.db.Query(context.Background(), "UPDATE todoapp.users SET name = $1, email = $2, password = $3 WHERE id = $4 RETURNING id", user.Name, user.Email, user.Password, id)
+	if err != nil {
+		return "", err
+	}
+	defer rows.Close()
+
+	return "User updated successfully " + id, nil
+}
+
+func (r *postgresUserRepository) SoftDeleteUser(id string) (string, error) {
+	rows, err := r.db.Query(context.Background(), "UPDATE todoapp.users SET deleted_at = $1 WHERE id = $2 RETURNING id", time.Now(), id)
+	if err != nil {
+		return "", err
+	}
+	defer rows.Close()
+
+	return "User deleted successfully" + id, nil
 }
