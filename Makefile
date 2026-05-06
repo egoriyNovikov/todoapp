@@ -46,3 +46,6 @@ env-socat-up:
 	docker compose up -d todoapp-env-alpine-socat
 env-socat-down:
 	docker compose down todoapp-env-alpine-socat
+
+run:
+	go run cmd/todoapp/main.go
