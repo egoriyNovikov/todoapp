@@ -45,6 +45,22 @@ func (r *postgresTaskRepository) CreateTask(task *tasks.Task) (string, error) {
 }
 
 func (r *postgresTaskRepository) UpdateTask(id string, task *tasks.Task) (string, error) {
+	currentTask, err := r.FindByID(id)
+	if err != nil {
+		return "", err
+	}
+	if task.Title == "" {
+		task.Title = currentTask.Title
+	}
+	if task.Description == "" {
+		task.Description = currentTask.Description
+	}
+	if task.Completed == false {
+		task.Completed = currentTask.Completed
+	}
+	if task.AuthorUserID == "" {
+		task.AuthorUserID = currentTask.AuthorUserID
+	}
 	rows, err := r.db.Query(context.Background(), "UPDATE todoapp.tasks SET title = $1, description = $2, completed = $3 WHERE id = $4 RETURNING id", task.Title, task.Description, task.Completed, id)
 	if err != nil {
 		return "", err
