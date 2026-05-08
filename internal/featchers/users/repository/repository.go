@@ -29,7 +29,7 @@ func NewPostgresRepo(db *pgx.Conn) *postgresUserRepository {
 func (r *postgresUserRepository) FindByID(id string) (users.User, error) {
 	row := r.db.QueryRow(context.Background(), "SELECT * FROM todoapp.users WHERE id = $1", id)
 	var user users.User
-	err := row.Scan(&user.ID, &user.Name, &user.Email, &user.Password, &user.CreatedAt, &user.UpdatedAt)
+	err := row.Scan(&user.ID, &user.Name, &user.Email, &user.Password, &user.CreatedAt, &user.UpdatedAt, &user.DeletedAt)
 	if err != nil {
 		return users.User{}, err
 	}
@@ -68,14 +68,30 @@ func (r *postgresUserRepository) FindAll() ([]users.User, error) {
 }
 
 func (r *postgresUserRepository) UpdateUser(id string, user *users.User) (string, error) {
-	fmt.Printf("Updating user: %+v\n", user)
-	fmt.Printf("ID: %s\n", id)
-	rows, err := r.db.Query(context.Background(), "UPDATE todoapp.users SET name = $1, email = $2, password = $3 WHERE id = $4 RETURNING id", user.Name, user.Email, user.Password, id)
+	currentUser, err := r.FindByID(id)
 	if err != nil {
 		return "", err
 	}
-	defer rows.Close()
 
+	if user.Email == "" {
+		user.Email = currentUser.Email
+	}
+	if user.Name == "" {
+		user.Name = currentUser.Name
+	}
+	if user.Password == "" {
+		user.Password = currentUser.Password
+	}
+
+	var updatedID string
+	err = r.db.QueryRow(context.Background(),
+		"UPDATE todoapp.users SET name=$1, email=$2, password=$3, updated_at=NOW() WHERE id=$4 RETURNING id",
+		user.Name, user.Email, user.Password, id,
+	).Scan(&updatedID)
+
+	if err != nil {
+		return "", err
+	}
 	return "User updated successfully " + id, nil
 }
 
@@ -86,5 +102,5 @@ func (r *postgresUserRepository) SoftDeleteUser(id string) (string, error) {
 	}
 	defer rows.Close()
 
-	return "User deleted successfully" + id, nil
+	return "User deleted successfully " + id, nil
 }
