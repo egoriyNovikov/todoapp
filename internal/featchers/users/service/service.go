@@ -14,6 +14,7 @@ type UserService interface {
 	GetAllUsers() ([]users.User, error)
 	UpdateUser(id string, user *users.User) (string, error)
 	SoftDeleteUser(id string) (string, error)
+	FindByEmail(email string, password string) (users.User, error)
 }
 
 type service struct {
@@ -67,4 +68,13 @@ func (s *service) SoftDeleteUser(id string) (string, error) {
 		return "", errors.New("failed to soft delete user: " + err.Error())
 	}
 	return result, nil
+}
+
+func (s *service) FindByEmail(email string, password string) (users.User, error) {
+	user, err := s.repo.FindByEmail(email, password)
+	if err != nil {
+		fmt.Printf("failed to find user by email: %v\n", err)
+		return users.User{}, errors.New("failed to find user by email: " + err.Error())
+	}
+	return user, nil
 }

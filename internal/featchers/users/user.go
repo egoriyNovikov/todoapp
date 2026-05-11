@@ -28,3 +28,8 @@ type SoftDeleteUserRequest struct {
 	ID        string    `json:"id"`
 	DeletedAt time.Time `json:"deleted_at"`
 }
+
+type LoginRequest struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}

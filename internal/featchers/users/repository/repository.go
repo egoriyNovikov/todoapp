@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	core_auth "github.com/egoriynovikov/todoapp/internal/core/auth"
 	"github.com/egoriynovikov/todoapp/internal/featchers/users"
 	"github.com/jackc/pgx/v5"
 )
@@ -20,6 +21,7 @@ type UserRepository interface {
 	FindAll() ([]users.User, error)
 	UpdateUser(id string, user *users.User) (string, error)
 	SoftDeleteUser(id string) (string, error)
+	FindByEmail(email string, password string) (users.User, error)
 }
 
 func NewPostgresRepo(db *pgx.Conn) *postgresUserRepository {
@@ -37,7 +39,8 @@ func (r *postgresUserRepository) FindByID(id string) (users.User, error) {
 }
 
 func (r *postgresUserRepository) CreateUser(user *users.User) (string, error) {
-	row := r.db.QueryRow(context.Background(), "INSERT INTO todoapp.users (name, email, password) VALUES ($1, $2, $3) RETURNING id", user.Name, user.Email, user.Password)
+	hashedPassword := core_auth.HashPassword(user.Password)
+	row := r.db.QueryRow(context.Background(), "INSERT INTO todoapp.users (name, email, password) VALUES ($1, $2, $3) RETURNING id", user.Name, user.Email, hashedPassword)
 	var id string
 	err := row.Scan(&id)
 	if err != nil {
@@ -103,4 +106,18 @@ func (r *postgresUserRepository) SoftDeleteUser(id string) (string, error) {
 	defer rows.Close()
 
 	return "User deleted successfully " + id, nil
+}
+
+func (r *postgresUserRepository) FindByEmail(email string, password string) (users.User, error) {
+	row := r.db.QueryRow(context.Background(), "SELECT * FROM todoapp.users WHERE email = $1", email)
+	var user users.User
+	err := row.Scan(&user.ID, &user.Name, &user.Email, &user.Password, &user.CreatedAt, &user.UpdatedAt, &user.DeletedAt)
+	if err != nil {
+		return users.User{}, err
+	}
+
+	if password == "" || user.Password != core_auth.HashPassword(password) {
+		return users.User{}, errors.New("invalid password")
+	}
+	return user, nil
 }

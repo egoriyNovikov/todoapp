@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	core_auth "github.com/egoriynovikov/todoapp/internal/core/auth"
 	"github.com/egoriynovikov/todoapp/internal/featchers/users"
 	user_service "github.com/egoriynovikov/todoapp/internal/featchers/users/service"
 )
@@ -78,4 +79,23 @@ func (h *UserHandle) GetAllUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	json.NewEncoder(w).Encode(users)
+}
+
+func (h *UserHandle) Login(w http.ResponseWriter, r *http.Request) {
+	var input users.LoginRequest
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		http.Error(w, "Invalid input ", http.StatusBadRequest)
+		return
+	}
+	user, err := h.service.FindByEmail(input.Email, input.Password)
+	if err != nil {
+		http.Error(w, "Failed to find user "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	token, err := core_auth.CreateToken(user)
+	if err != nil {
+		http.Error(w, "Failed to login "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	json.NewEncoder(w).Encode(token)
 }
