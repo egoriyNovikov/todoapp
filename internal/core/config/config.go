@@ -13,6 +13,7 @@ type Config struct {
 	PostgresDB       string
 	PostgresHost     string
 	PostgresPort     string
+	JWTSecret        string
 }
 
 func NewConfig() *Config {
@@ -27,5 +28,6 @@ func NewConfig() *Config {
 		PostgresDB:       os.Getenv("POSTGRES_DB"),
 		PostgresHost:     os.Getenv("POSTGRES_HOST"),
 		PostgresPort:     os.Getenv("POSTGRES_PORT"),
+		JWTSecret:        os.Getenv("JWT_SECRET"),
 	}
 }
