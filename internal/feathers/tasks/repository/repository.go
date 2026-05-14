@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/egoriynovikov/todoapp/internal/featchers/tasks"
+	"github.com/egoriynovikov/todoapp/internal/feathers/tasks"
 	"github.com/jackc/pgx/v5"
 )
 

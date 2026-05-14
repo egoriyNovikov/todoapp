@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	core_middleware_logger "github.com/egoriynovikov/todoapp/internal/core/middleware/logger"
-	"github.com/egoriynovikov/todoapp/internal/featchers/tasks"
-	tasks_service "github.com/egoriynovikov/todoapp/internal/featchers/tasks/service"
+	"github.com/egoriynovikov/todoapp/internal/feathers/tasks"
+	tasks_service "github.com/egoriynovikov/todoapp/internal/feathers/tasks/service"
 )
 
 type TaskHandle struct {

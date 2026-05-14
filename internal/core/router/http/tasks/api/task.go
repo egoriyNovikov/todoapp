@@ -4,9 +4,9 @@ import (
 	"net/http"
 
 	core_auth "github.com/egoriynovikov/todoapp/internal/core/auth"
-	tasks_repository "github.com/egoriynovikov/todoapp/internal/featchers/tasks/repository"
-	tasks_service "github.com/egoriynovikov/todoapp/internal/featchers/tasks/service"
-	http_task_transport "github.com/egoriynovikov/todoapp/internal/featchers/tasks/transport/http"
+	tasks_repository "github.com/egoriynovikov/todoapp/internal/feathers/tasks/repository"
+	tasks_service "github.com/egoriynovikov/todoapp/internal/feathers/tasks/service"
+	http_task_transport "github.com/egoriynovikov/todoapp/internal/feathers/tasks/transport/http"
 	"github.com/jackc/pgx/v5"
 )
 
