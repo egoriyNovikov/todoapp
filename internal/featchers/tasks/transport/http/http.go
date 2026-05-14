@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	core_middleware_logger "github.com/egoriynovikov/todoapp/internal/core/middleware/logger"
 	"github.com/egoriynovikov/todoapp/internal/featchers/tasks"
 	tasks_service "github.com/egoriynovikov/todoapp/internal/featchers/tasks/service"
 )
@@ -21,6 +22,7 @@ func (h *TaskHandle) GetTask(w http.ResponseWriter, r *http.Request) {
 
 	task, err := h.service.GetTaskByID(id)
 	if err != nil {
+		core_middleware_logger.SetError(w, err)
 		http.Error(w, "Task not found "+err.Error(), http.StatusNotFound)
 		return
 	}
@@ -30,11 +32,13 @@ func (h *TaskHandle) GetTask(w http.ResponseWriter, r *http.Request) {
 func (h *TaskHandle) CreateTask(w http.ResponseWriter, r *http.Request) {
 	var input tasks.CreateTaskRequest
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		core_middleware_logger.SetError(w, err)
 		http.Error(w, "Invalid input ", http.StatusBadRequest)
 		return
 	}
 	task, err := h.service.CreateTask(&tasks.Task{Title: input.Title, Description: input.Description, Completed: input.Completed, AuthorUserID: input.AuthorUserID})
 	if err != nil {
+		core_middleware_logger.SetError(w, err)
 		http.Error(w, "Failed to create task "+err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -44,15 +48,18 @@ func (h *TaskHandle) CreateTask(w http.ResponseWriter, r *http.Request) {
 func (h *TaskHandle) UpdateTask(w http.ResponseWriter, r *http.Request) {
 	var input tasks.UpdateTaskRequest
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		core_middleware_logger.SetError(w, err)
 		http.Error(w, "Invalid input ", http.StatusBadRequest)
 		return
 	}
 	id := r.PathValue("id")
 	task, err := h.service.UpdateTask(id, &tasks.Task{Title: input.Title, Description: input.Description, Completed: input.Completed})
 	if err != nil {
+		core_middleware_logger.SetError(w, err)
 		http.Error(w, "Failed to update task "+err.Error(), http.StatusInternalServerError)
 		return
 	}
+	core_middleware_logger.SetResult(w, task)
 	json.NewEncoder(w).Encode(task)
 }
 
@@ -60,6 +67,7 @@ func (h *TaskHandle) SoftDeleteTask(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	task, err := h.service.SoftDeleteTask(id)
 	if err != nil {
+		core_middleware_logger.SetError(w, err)
 		http.Error(w, "Failed to soft delete task "+err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -69,8 +77,10 @@ func (h *TaskHandle) SoftDeleteTask(w http.ResponseWriter, r *http.Request) {
 func (h *TaskHandle) GetAllTasks(w http.ResponseWriter, r *http.Request) {
 	tasks, err := h.service.GetAllTasks()
 	if err != nil {
+		core_middleware_logger.SetError(w, err)
 		http.Error(w, "Failed to get all tasks "+err.Error(), http.StatusInternalServerError)
 		return
 	}
+	core_middleware_logger.SetResult(w, tasks)
 	json.NewEncoder(w).Encode(tasks)
 }

@@ -14,6 +14,7 @@ type Config struct {
 	PostgresHost     string
 	PostgresPort     string
 	JWTSecret        string
+	IsProd           bool
 }
 
 func NewConfig() *Config {
@@ -29,5 +30,6 @@ func NewConfig() *Config {
 		PostgresHost:     os.Getenv("POSTGRES_HOST"),
 		PostgresPort:     os.Getenv("POSTGRES_PORT"),
 		JWTSecret:        os.Getenv("JWT_SECRET"),
+		IsProd:           os.Getenv("IS_PROD") == "true",
 	}
 }
