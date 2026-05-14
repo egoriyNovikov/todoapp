@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/egoriynovikov/todoapp/internal/featchers/tasks"
-	tasks_repository "github.com/egoriynovikov/todoapp/internal/featchers/tasks/repository"
+	"github.com/egoriynovikov/todoapp/internal/feathers/tasks"
+	tasks_repository "github.com/egoriynovikov/todoapp/internal/feathers/tasks/repository"
 )
 
 type TaskService interface {

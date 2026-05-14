@@ -7,8 +7,8 @@ import (
 
 	core_auth "github.com/egoriynovikov/todoapp/internal/core/auth"
 	core_middleware_logger "github.com/egoriynovikov/todoapp/internal/core/middleware/logger"
-	"github.com/egoriynovikov/todoapp/internal/featchers/users"
-	user_service "github.com/egoriynovikov/todoapp/internal/featchers/users/service"
+	"github.com/egoriynovikov/todoapp/internal/feathers/users"
+	user_service "github.com/egoriynovikov/todoapp/internal/feathers/users/service"
 )
 
 type UserHandle struct {

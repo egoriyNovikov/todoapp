@@ -8,7 +8,7 @@ import (
 	"time"
 
 	core_config "github.com/egoriynovikov/todoapp/internal/core/config"
-	"github.com/egoriynovikov/todoapp/internal/featchers/users"
+	"github.com/egoriynovikov/todoapp/internal/feathers/users"
 	"github.com/golang-jwt/jwt/v5"
 )
 
