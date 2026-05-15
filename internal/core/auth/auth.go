@@ -8,6 +8,7 @@ import (
 	"time"
 
 	core_config "github.com/egoriynovikov/todoapp/internal/core/config"
+	core_error "github.com/egoriynovikov/todoapp/internal/core/error"
 	"github.com/egoriynovikov/todoapp/internal/feathers/users"
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -30,14 +31,14 @@ func AuthenticateMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		token := r.Header.Get("Authorization")
 		if token == "" {
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			core_error.WriteError(w, http.StatusUnauthorized, "Unauthorized")
 			return
 		}
 		parsedToken, err := jwt.Parse(token, func(t *jwt.Token) (interface{}, error) {
 			return []byte(core_config.NewConfig().JWTSecret), nil
 		})
 		if err != nil || !parsedToken.Valid {
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			core_error.WriteError(w, http.StatusUnauthorized, "Unauthorized")
 			return
 		}
 

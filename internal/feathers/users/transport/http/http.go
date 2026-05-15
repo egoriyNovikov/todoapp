@@ -2,10 +2,10 @@ package http_user_transport
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	core_auth "github.com/egoriynovikov/todoapp/internal/core/auth"
+	core_error "github.com/egoriynovikov/todoapp/internal/core/error"
 	core_middleware_logger "github.com/egoriynovikov/todoapp/internal/core/middleware/logger"
 	"github.com/egoriynovikov/todoapp/internal/feathers/users"
 	user_service "github.com/egoriynovikov/todoapp/internal/feathers/users/service"
@@ -25,7 +25,7 @@ func (h *UserHandle) GetUser(w http.ResponseWriter, r *http.Request) {
 	date, err := h.service.GetUserByID(id)
 	if err != nil {
 		core_middleware_logger.SetError(w, err)
-		http.Error(w, "User not found", http.StatusNotFound)
+		core_error.WriteError(w, http.StatusNotFound, "User not found")
 		return
 	}
 
@@ -37,13 +37,13 @@ func (h *UserHandle) CreateUser(w http.ResponseWriter, r *http.Request) {
 	var input users.CreateUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 		core_middleware_logger.SetError(w, err)
-		http.Error(w, "Invalid input", http.StatusBadRequest)
+		core_error.WriteError(w, http.StatusBadRequest, "Invalid input")
 		return
 	}
 	id, err := h.service.CreateUser(&users.User{Name: input.Name, Email: input.Email, Password: input.Password})
 	if err != nil {
 		core_middleware_logger.SetError(w, err)
-		fmt.Fprintf(w, "failed to create user: %v", err)
+		core_error.WriteError(w, http.StatusInternalServerError, "Failed to create user: "+err.Error())
 		return
 	}
 	core_middleware_logger.SetResult(w, id)
@@ -54,7 +54,7 @@ func (h *UserHandle) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	var input users.UpdateUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 		core_middleware_logger.SetError(w, err)
-		http.Error(w, "Invalid input", http.StatusBadRequest)
+		core_error.WriteError(w, http.StatusBadRequest, "Invalid input")
 		return
 	}
 
@@ -62,7 +62,7 @@ func (h *UserHandle) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	id, err := h.service.UpdateUser(id, &users.User{Name: input.Name, Email: input.Email, Password: input.Password})
 	if err != nil {
 		core_middleware_logger.SetError(w, err)
-		fmt.Fprintf(w, "failed to update user: %v", err)
+		core_error.WriteError(w, http.StatusInternalServerError, "Failed to update user: "+err.Error())
 		return
 	}
 	core_middleware_logger.SetResult(w, id)
@@ -75,7 +75,7 @@ func (h *UserHandle) SoftDeleteUser(w http.ResponseWriter, r *http.Request) {
 	id, err := h.service.SoftDeleteUser(id)
 	if err != nil {
 		core_middleware_logger.SetError(w, err)
-		fmt.Fprintf(w, "failed to soft delete user: %v", err)
+		core_error.WriteError(w, http.StatusInternalServerError, "Failed to soft delete user: "+err.Error())
 		return
 	}
 	core_middleware_logger.SetResult(w, id)
@@ -83,32 +83,32 @@ func (h *UserHandle) SoftDeleteUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandle) GetAllUsers(w http.ResponseWriter, r *http.Request) {
-	users, err := h.service.GetAllUsers()
+	usersData, err := h.service.GetAllUsers()
 	if err != nil {
 		core_middleware_logger.SetError(w, err)
-		fmt.Fprintf(w, "failed to get all users: %v", err)
+		core_error.WriteError(w, http.StatusInternalServerError, "Failed to soft delete user: "+err.Error())
 		return
 	}
-	core_middleware_logger.SetResult(w, users)
-	json.NewEncoder(w).Encode(users)
+	core_middleware_logger.SetResult(w, usersData)
+	json.NewEncoder(w).Encode(usersData)
 }
 
 func (h *UserHandle) Login(w http.ResponseWriter, r *http.Request) {
 	var input users.LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
-		http.Error(w, "Invalid input ", http.StatusBadRequest)
+		core_error.WriteError(w, http.StatusBadRequest, "Invalid input")
 		return
 	}
 	user, err := h.service.FindByEmail(input.Email, input.Password)
 	if err != nil {
 		core_middleware_logger.SetError(w, err)
-		http.Error(w, "Failed to find user "+err.Error(), http.StatusInternalServerError)
+		core_error.WriteError(w, http.StatusInternalServerError, "Failed to find user: "+err.Error())
 		return
 	}
 	token, err := core_auth.CreateToken(user)
 	if err != nil {
 		core_middleware_logger.SetError(w, err)
-		http.Error(w, "Failed to login "+err.Error(), http.StatusInternalServerError)
+		core_error.WriteError(w, http.StatusInternalServerError, "Failed to login: "+err.Error())
 		return
 	}
 	core_middleware_logger.SetResult(w, token)
