@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/egoriynovikov/todoapp/internal/featchers/users"
-	user_repository "github.com/egoriynovikov/todoapp/internal/featchers/users/repository"
+	"github.com/egoriynovikov/todoapp/internal/feathers/users"
+	user_repository "github.com/egoriynovikov/todoapp/internal/feathers/users/repository"
 )
 
 type UserService interface {

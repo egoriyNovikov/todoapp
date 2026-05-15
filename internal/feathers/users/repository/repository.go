@@ -7,7 +7,7 @@ import (
 	"time"
 
 	core_auth "github.com/egoriynovikov/todoapp/internal/core/auth"
-	"github.com/egoriynovikov/todoapp/internal/featchers/users"
+	"github.com/egoriynovikov/todoapp/internal/feathers/users"
 	"github.com/jackc/pgx/v5"
 )
 
