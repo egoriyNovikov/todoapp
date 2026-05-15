@@ -2,8 +2,11 @@ package http_task_transport
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
+	"strings"
 
+	core_auth "github.com/egoriynovikov/todoapp/internal/core/auth"
 	core_error "github.com/egoriynovikov/todoapp/internal/core/error"
 	core_middleware_logger "github.com/egoriynovikov/todoapp/internal/core/middleware/logger"
 	"github.com/egoriynovikov/todoapp/internal/feathers/tasks"
@@ -37,7 +40,19 @@ func (h *TaskHandle) CreateTask(w http.ResponseWriter, r *http.Request) {
 		core_error.WriteError(w, http.StatusBadRequest, "Invalid input")
 		return
 	}
-	task, err := h.service.CreateTask(&tasks.Task{Title: input.Title, Description: input.Description, Completed: input.Completed, AuthorUserID: input.AuthorUserID})
+	scheme, token, ok := strings.Cut(r.Header.Get("Authorization"), " ")
+	if !ok || !strings.EqualFold(scheme, "Bearer") {
+		core_middleware_logger.SetError(w, errors.New("Unauthorized"))
+		core_error.WriteError(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+	userID, err := core_auth.GetUserIDFromToken(token)
+	if err != nil {
+		core_middleware_logger.SetError(w, err)
+		core_error.WriteError(w, http.StatusUnauthorized, "Unauthorized: "+err.Error())
+		return
+	}
+	task, err := h.service.CreateTask(&tasks.Task{Title: input.Title, Description: input.Description, Completed: input.Completed, AuthorUserID: userID})
 	if err != nil {
 		core_middleware_logger.SetError(w, err)
 		core_error.WriteError(w, http.StatusInternalServerError, "Failed to create task: "+err.Error())

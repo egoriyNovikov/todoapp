@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"net/http"
+	"strings"
 	"time"
 
 	core_config "github.com/egoriynovikov/todoapp/internal/core/config"
@@ -34,6 +35,11 @@ func AuthenticateMiddleware(next http.Handler) http.Handler {
 			core_error.WriteError(w, http.StatusUnauthorized, "Unauthorized")
 			return
 		}
+		scheme, token, ok := strings.Cut(token, " ")
+		if !ok || !strings.EqualFold(scheme, "Bearer") {
+			core_error.WriteError(w, http.StatusUnauthorized, "Unauthorized")
+			return
+		}
 		parsedToken, err := jwt.Parse(token, func(t *jwt.Token) (interface{}, error) {
 			return []byte(core_config.NewConfig().JWTSecret), nil
 		})
@@ -53,4 +59,18 @@ func HashPassword(password string) string {
 
 func VerifyPassword(password string, hashedPassword string) bool {
 	return sha256.Sum256([]byte(password)) == sha256.Sum256([]byte(hashedPassword))
+}
+
+func GetUserIDFromToken(token string) (string, error) {
+	claims := &jwt.RegisteredClaims{}
+	parsedToken, err := jwt.ParseWithClaims(token, claims, func(t *jwt.Token) (interface{}, error) {
+		return []byte(core_config.NewConfig().JWTSecret), nil
+	})
+	if err != nil || !parsedToken.Valid {
+		return "", err
+	}
+	if claims.Subject == "" {
+		return "", errors.New("missing subject")
+	}
+	return claims.Subject, nil
 }
