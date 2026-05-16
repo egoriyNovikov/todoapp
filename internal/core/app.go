@@ -8,6 +8,7 @@ import (
 	core_config "github.com/egoriynovikov/todoapp/internal/core/config"
 	core_middleware_header "github.com/egoriynovikov/todoapp/internal/core/middleware/header"
 	core_middleware_logger "github.com/egoriynovikov/todoapp/internal/core/middleware/logger"
+	core_router_http_statistics_api "github.com/egoriynovikov/todoapp/internal/core/router/http/statistics/api"
 	core_router_http_tasks_api "github.com/egoriynovikov/todoapp/internal/core/router/http/tasks/api"
 	core_router_http_users_api "github.com/egoriynovikov/todoapp/internal/core/router/http/users/api"
 	"github.com/jackc/pgx/v5"
@@ -39,6 +40,7 @@ func NewApp() *App {
 func (a *App) mapRoutes() {
 	core_router_http_tasks_api.RegisterTaskRoutes(a.router, a.db)
 	core_router_http_users_api.RegisterUserRoutes(a.router, a.db)
+	core_router_http_statistics_api.RegisterStatisticsRoutes(a.router, a.db)
 }
 
 func (a *App) Run(logger *zap.Logger) error {
