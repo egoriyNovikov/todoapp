@@ -7,7 +7,12 @@ import (
 
 type StatisticsService interface {
 	GetCompletedTasks(userID string) (statistics.CompletedTasksByUser, error)
-	GetTasksInCompleted(userID string) (statistics.TasksInCompleted, error)
+	GetTasksInCompleted(userID string) (statistics.TasksInCompletedByUser, error)
+	GetAllTasks() (statistics.AllTasks, error)
+	GetAllTasksByUser(userID string) (statistics.AllTasksByUser, error)
+	GetAllCompletedTasks(userID string) (statistics.AllCompletedTasks, error)
+	GetAllInCompletedTasks(userID string) (statistics.AllInCompletedTasks, error)
+	GetAllUsersStatistics(userID string) (statistics.GetAllUsersStatistics, error)
 }
 
 type service struct {
@@ -22,6 +27,26 @@ func (s *service) GetCompletedTasks(userID string) (statistics.CompletedTasksByU
 	return s.repo.GetCompletedTasks(userID)
 }
 
-func (s *service) GetTasksInCompleted(userID string) (statistics.TasksInCompleted, error) {
+func (s *service) GetTasksInCompleted(userID string) (statistics.TasksInCompletedByUser, error) {
 	return s.repo.GetTasksInCompleted(userID)
+}
+
+func (s *service) GetAllTasks() (statistics.AllTasks, error) {
+	return s.repo.GetAllTasks()
+}
+
+func (s *service) GetAllTasksByUser(userID string) (statistics.AllTasksByUser, error) {
+	return s.repo.GetAllTasksByUser(userID)
+}
+
+func (s *service) GetAllCompletedTasks(userID string) (statistics.AllCompletedTasks, error) {
+	return s.repo.GetAllCompletedTasks(userID)
+}
+
+func (s *service) GetAllInCompletedTasks(userID string) (statistics.AllInCompletedTasks, error) {
+	return s.repo.GetAllInCompletedTasks(userID)
+}
+
+func (s *service) GetAllUsersStatistics(userID string) (statistics.GetAllUsersStatistics, error) {
+	return s.repo.GetAllUsersStatistics(userID)
 }
