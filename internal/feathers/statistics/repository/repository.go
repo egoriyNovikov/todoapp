@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/egoriynovikov/todoapp/internal/feathers/statistics"
-	"github.com/egoriynovikov/todoapp/internal/feathers/tasks"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -13,137 +12,42 @@ type postgresStatisticsRepository struct {
 }
 
 type StatisticsRepository interface {
-	GetCompletedTasks(userID string) (statistics.CompletedTasksByUser, error)
-	GetTasksInCompleted(userID string) (statistics.TasksInCompletedByUser, error)
-	GetAllTasks() (statistics.AllTasks, error)
-	GetAllTasksByUser(userID string) (statistics.AllTasksByUser, error)
-	GetAllCompletedTasks(userID string) (statistics.AllCompletedTasks, error)
-	GetAllInCompletedTasks(userID string) (statistics.AllInCompletedTasks, error)
-	GetAllUsersStatistics(userID string) (statistics.GetAllUsersStatistics, error)
+	GetSummaryStatistics(userID string) (statistics.SummaryStatistics, error)
 }
 
 func NewPostgresRepo(db *pgx.Conn) *postgresStatisticsRepository {
 	return &postgresStatisticsRepository{db: db}
 }
 
-func (r *postgresStatisticsRepository) GetCompletedTasks(userID string) (statistics.CompletedTasksByUser, error) {
-	var tasksCompleted int
-	err := r.db.QueryRow(context.Background(), "SELECT COUNT(*) FROM todoapp.tasks WHERE author_user_id = $1 AND completed = true", userID).Scan(&tasksCompleted)
+func (r *postgresStatisticsRepository) GetSummaryStatistics(userID string) (statistics.SummaryStatistics, error) {
+	rows, err := r.db.Query(context.Background(), `SELECT
+  COUNT(*) FILTER (WHERE completed)     AS completed,
+  COUNT(*) FILTER (WHERE NOT completed) AS pending,
+  COUNT(*) AS total
+	FROM todoapp.tasks
+	WHERE deleted_at IS NULL
+  AND ($1::uuid IS NULL OR author_user_id = $1)`, userID)
 	if err != nil {
-		return statistics.CompletedTasksByUser{}, err
+		return statistics.SummaryStatistics{}, err
 	}
-	return statistics.CompletedTasksByUser{
-		UserID:         userID,
-		TasksCompleted: &tasksCompleted,
-	}, nil
-}
-
-func (r *postgresStatisticsRepository) GetTasksInCompleted(userID string) (statistics.TasksInCompletedByUser, error) {
-	var tasksCompleted int
-	err := r.db.QueryRow(context.Background(), "SELECT COUNT(*) FROM todoapp.tasks WHERE author_user_id = $1 AND completed = false", userID).Scan(&tasksCompleted)
+	defer rows.Close()
+	if userID == "" {
+		userID = "all"
+	}
+	var completed int = 0
+	var pending int = 0
+	var total int = 0
+	err = rows.Scan(&completed, &pending, &total)
 	if err != nil {
-		return statistics.TasksInCompletedByUser{}, err
+		return statistics.SummaryStatistics{}, err
 	}
-	return statistics.TasksInCompletedByUser{
-		UserID:           userID,
-		TasksInCompleted: &tasksCompleted,
-	}, nil
-}
-
-func (r *postgresStatisticsRepository) GetAllTasks() (statistics.AllTasks, error) {
-	var tasksCompleted int
-	var tasksIncompleted int
-	err := r.db.QueryRow(context.Background(), "SELECT COUNT(*) FROM todoapp.tasks WHERE deleted_at IS NULL AND completed = true").Scan(&tasksCompleted)
-	if err != nil {
-		return statistics.AllTasks{}, err
-	}
-	err = r.db.QueryRow(context.Background(), "SELECT COUNT(*) FROM todoapp.tasks WHERE deleted_at IS NULL AND completed = false").Scan(&tasksIncompleted)
-	if err != nil {
-		return statistics.AllTasks{}, err
-	}
-	return statistics.AllTasks{
-		TasksCompleted:   &tasksCompleted,
-		TasksInCompleted: &tasksIncompleted,
-	}, nil
-}
-
-func (r *postgresStatisticsRepository) GetAllTasksByUser(userID string) (statistics.AllTasksByUser, error) {
-	var tasksCompleted int
-	var tasksIncompleted int
-	err := r.db.QueryRow(context.Background(), "SELECT COUNT(*) FROM todoapp.tasks WHERE author_user_id = $1 AND deleted_at IS NULL AND completed = true", userID).Scan(&tasksCompleted)
-	if err != nil {
-		return statistics.AllTasksByUser{}, err
-	}
-	err = r.db.QueryRow(context.Background(), "SELECT COUNT(*) FROM todoapp.tasks WHERE author_user_id = $1 AND deleted_at IS NULL AND completed = false", userID).Scan(&tasksIncompleted)
-	if err != nil {
-		return statistics.AllTasksByUser{}, err
-	}
-	return statistics.AllTasksByUser{
+	return statistics.SummaryStatistics{
 		UserID: userID,
-		AllTasks: statistics.AllTasks{
-			TasksCompleted:   &tasksCompleted,
-			TasksInCompleted: &tasksIncompleted,
+		Counts: statistics.TaskCounts{
+			Completed: completed,
+			Pending:   pending,
+			Total:     total,
 		},
-	}, nil
-}
-
-func (r *postgresStatisticsRepository) GetAllCompletedTasks(userID string) (statistics.AllCompletedTasks, error) {
-	var tasksCompleted []*tasks.Task
-	rows, err := r.db.Query(context.Background(), "SELECT * FROM todoapp.tasks WHERE author_user_id = $1 AND deleted_at IS NULL AND completed = true", userID)
-	if err != nil {
-		return statistics.AllCompletedTasks{}, err
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var task tasks.Task
-		err = rows.Scan(&task.ID, &task.Title, &task.Description, &task.Completed, &task.CreatedAt, &task.UpdatedAt, &task.AuthorUserID, &task.DeletedAt)
-		if err != nil {
-			return statistics.AllCompletedTasks{}, err
-		}
-		tasksCompleted = append(tasksCompleted, &task)
-	}
-	return statistics.AllCompletedTasks{
-		TasksCompleted: tasksCompleted,
-	}, nil
-}
-
-func (r *postgresStatisticsRepository) GetAllInCompletedTasks(userID string) (statistics.AllInCompletedTasks, error) {
-	var tasksIncompleted []*tasks.Task
-	rows, err := r.db.Query(context.Background(), "SELECT * FROM todoapp.tasks WHERE author_user_id = $1 AND deleted_at IS NULL AND completed = false", userID)
-	if err != nil {
-		return statistics.AllInCompletedTasks{}, err
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var task tasks.Task
-		err = rows.Scan(&task.ID, &task.Title, &task.Description, &task.Completed, &task.CreatedAt, &task.UpdatedAt, &task.AuthorUserID, &task.DeletedAt)
-		if err != nil {
-			return statistics.AllInCompletedTasks{}, err
-		}
-		tasksIncompleted = append(tasksIncompleted, &task)
-	}
-	return statistics.AllInCompletedTasks{
-		TasksInCompleted: tasksIncompleted,
-	}, nil
-}
-
-func (r *postgresStatisticsRepository) GetAllUsersStatistics(userID string) (statistics.GetAllUsersStatistics, error) {
-	completedTasks, err := r.GetAllCompletedTasks(userID)
-	if err != nil {
-		return statistics.GetAllUsersStatistics{}, err
-	}
-	incompletedTasks, err := r.GetAllInCompletedTasks(userID)
-	if err != nil {
-		return statistics.GetAllUsersStatistics{}, err
-	}
-	allTasks, err := r.GetAllTasks()
-	if err != nil {
-		return statistics.GetAllUsersStatistics{}, err
-	}
-	return statistics.GetAllUsersStatistics{
-		UserID:              userID,
-		AllTasks:            allTasks,
-		AllCompletedTasks:   completedTasks,
-		AllInCompletedTasks: incompletedTasks,
+		Rate: float64(completed) / float64(total),
 	}, nil
 }
